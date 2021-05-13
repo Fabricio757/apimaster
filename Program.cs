@@ -16,7 +16,7 @@ namespace WebApi
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>()
-                        .UseUrls("http://localhost:4000");
+                        .UseUrls("http://localhost:8082");
                 });
     }
 }

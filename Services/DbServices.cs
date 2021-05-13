@@ -38,8 +38,9 @@ namespace WebApi.Services
         }
 
         public string Input(string input){
-            try{
-                string JsonResponse = "{\"resultados\": [";
+            string JsonResponse = "{\"resultados\": [";
+            int i = 1;
+            try{                
                 JObject jInput = JObject.Parse(input);
                 string jBaseDatos = jInput["BaseDatos"].ToString();
                 
@@ -47,7 +48,7 @@ namespace WebApi.Services
                 {
                     sqlConnection.Open();
                     JArray jOperaciones = (JArray)jInput["Operaciones"];
-                    int i = 1;
+                    
                     foreach (JObject jOperacion in jOperaciones)
                     {
                         string jOp = jOperacion["Op"].ToString();
@@ -61,11 +62,20 @@ namespace WebApi.Services
                             string qryInsertValues = ") values (";
                             foreach (JObject jArg in jArgs)
                             {
-                                JProperty property = jArg.Properties().ToList()[0];
-                                string jType = property.Name.Split(':')[1];
-                                string jName = property.Name.Split(':')[0];
+                                string jType = "";
+                                JProperty propertyValue = jArg.Properties().ToList()[0];
+                                string jName = propertyValue.Name;
+                                string jValue = propertyValue.Value.ToString();
+
+                                if(jArg.Properties().ToList().Count > 1)
+                                {
+                                    JProperty propertyType = jArg.Properties().ToList()[1];
+                                    jType = propertyType.Value.ToString();
+                                    jValue = FormatValue(jType, jValue);
+                                }                                
+
                                 qryInsert += (first ? " (" : ", ") + jName;
-                                qryInsertValues += (first ? "" : ", ") + FormatValue(jType, property.Value.ToString());
+                                qryInsertValues += (first ? "" : ", ") + jValue;
                                 first = false;
                             }
                             qryInsert += qryInsertValues + ")";
@@ -74,7 +84,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += "{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Seleccion")
@@ -85,38 +95,66 @@ namespace WebApi.Services
                             JArray jArgs = (JArray)jOperacion["args"];
                             if (!(jArgs is null)){
                                 qrySelect += (jArgs.Count > 0  ? " WHERE " : "");
+     
+                                bool firstWhere = true;
                                 foreach (JObject jArg in jArgs)
                                 {
-                                    JProperty property = jArg.Properties().ToList()[0];
-                                    qrySelect += property.Name + " = " + property.Value;
+                                    string jType = "";
+                                    JProperty propertyValue = jArg.Properties().ToList()[0];
+                                    string jName = propertyValue.Name;
+                                    string jValue = propertyValue.Value.ToString();
+
+                                    if(jArg.Properties().ToList().Count > 1)
+                                    {
+                                        JProperty propertyType = jArg.Properties().ToList()[1];
+                                        jType = propertyType.Value.ToString();
+                                        jValue = FormatValue(jType, jValue);
+                                    }  
+
+                                    qrySelect += (firstWhere ? " " : " and ") + jName + " = " + jValue;                                    
+                                    firstWhere = false;
                                 }
+
                             }
                             SqlCommand sqlCommand = new SqlCommand(qrySelect, sqlConnection);
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += "{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Delete")
                         {
                             string jTabla = jOperacion["tabla"].ToString();
                             string qrySelect = "DELETE FROM " + jTabla;
+                            bool firstWhere = true;
 
                             JArray jArgs = (JArray)jOperacion["args"];
                             if (!(jArgs is null)){
                                 qrySelect += (jArgs.Count > 0  ? " WHERE " : "");
                                 foreach (JObject jArg in jArgs)
                                 {
-                                    JProperty property = jArg.Properties().ToList()[0];
-                                    qrySelect += property.Name + " = " + property.Value;
+                                    string jType = "";
+                                    JProperty propertyValue = jArg.Properties().ToList()[0];
+                                    string jName = propertyValue.Name;
+                                    string jValue = propertyValue.Value.ToString();
+
+                                    if(jArg.Properties().ToList().Count > 1)
+                                    {
+                                        JProperty propertyType = jArg.Properties().ToList()[1];
+                                        jType = propertyType.Value.ToString();
+                                        jValue = FormatValue(jType, jValue);
+                                    }  
+
+                                    qrySelect += (firstWhere ? " " : " and ") + jName + " = " + jValue;                                    
+                                    firstWhere = false;
                                 }
                             }
                             SqlCommand sqlCommand = new SqlCommand(qrySelect, sqlConnection);
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += "{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Update")
@@ -129,25 +167,28 @@ namespace WebApi.Services
                             bool firstSet = true;
 
                             string qrySET = " SET ";
-
                             string qryWHERE = " WHERE ";
+                            
                             foreach (JObject jArg in jArgs)
                             {
-                                JProperty property = jArg.Properties().ToList()[0];
-                                string jType = property.Name.Split(':')[1];
-                                string jName = property.Name.Split(':')[0];
+                                string jType = "";
+                                JProperty propertyValue = jArg.Properties().ToList()[0];
+                                string jName = propertyValue.Name;
+                                string jValue = propertyValue.Value.ToString();
 
-                                JProperty property1 = jArg.Properties().ToList()[1];
-                                string jData = property1.Value.ToString();
+                                JProperty propertyKeyDataType = jArg.Properties().ToList()[1];
+                                string jKeyData = propertyKeyDataType.Name;
+                                jType = propertyKeyDataType.Value.ToString();
+                                jValue = FormatValue(jType, jValue);
                         
-                                if(jData == "key")
+                                if(jKeyData == "key")
                                 {
-                                    qryWHERE += (firstWhere ? " " : " and ") + jName + " = " + FormatValue(jType, property.Value.ToString());                                    
+                                    qryWHERE += (firstWhere ? " " : " and ") + jName + " = " + jValue;                                    
                                     firstWhere = false;
                                 }
                                 else
                                 {
-                                    qrySET += (firstSet ? " " : " and ") + jName + " = " + FormatValue(jType, property.Value.ToString());
+                                    qrySET += (firstSet ? " " : " and ") + jName + " = " + jValue;
                                     firstSet = false;
                                 }
                             }
@@ -157,20 +198,25 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += "{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                     }
                     sqlConnection.Close();
                 }
-                JsonResponse += "]}";
+                
                 //JsonResponse = "{'resultados': [{'1': [{'id':1,'nombre':'Perro     '},{'id':2,'nombre':'Gato      '},{'id':3,'nombre':'Leon      '},{'id':4,'nombre':'Tigre     '},{'id':5,'nombre':'Chita     '},{'id':7,'nombre':'Orca      '},{'id':8,'nombre':'Delfin    '}]}";
-                return JsonResponse;
+                
             }
             catch(Exception ex)
             {
-                return ex.Message;
+                JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": \"" + ex.Message + "\"}";;
             }
+            finally
+            {
+                JsonResponse += "]}";                
+            }
+            return JsonResponse;
         }
 
         public string Get(string input){
