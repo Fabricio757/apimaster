@@ -84,7 +84,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += (i > 1 ? "," : "")+"{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Seleccion")
@@ -198,7 +198,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += (i > 1 ? "," : "")+"{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                     }
@@ -206,15 +206,12 @@ namespace WebApi.Services
                 }
                 
                 //JsonResponse = "{'resultados': [{'1': [{'id':1,'nombre':'Perro     '},{'id':2,'nombre':'Gato      '},{'id':3,'nombre':'Leon      '},{'id':4,'nombre':'Tigre     '},{'id':5,'nombre':'Chita     '},{'id':7,'nombre':'Orca      '},{'id':8,'nombre':'Delfin    '}]}";
-                
+                JsonResponse += "], \"error\": \"false\"}"; 
             }
             catch(Exception ex)
             {
-                JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": \"" + ex.Message + "\"}";;
-            }
-            finally
-            {
-                JsonResponse += "]}";                
+                JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": \"" + ex.Message + "\"}";
+                JsonResponse += "], \"error\": \"true\"}"; 
             }
             return JsonResponse;
         }
