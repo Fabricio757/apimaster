@@ -24,29 +24,5 @@ namespace WebApi.Controllers
             return Ok(dbResponse);
         }
 
-        [Authorize]
-        [HttpGet("Get")]
-        public IActionResult Get(InputJsonRequest model)
-        {
-            var dbResponse = _dbService.Get(model.Input);
-            return Ok(dbResponse);
-        }
-
-
-        [Authorize]
-        [HttpPost("Post")]
-        public IActionResult Post(InputJsonRequest model)
-        {
-            string dbResponse = _dbService.Post(model.Input);
-            return Ok(dbResponse);
-        }
-
-        [Authorize]
-        [HttpPut("Put")]
-        public IActionResult Put(InputJsonRequest model)
-        {
-            string dbResponse = _dbService.Put(model.Input);
-            return Ok(dbResponse);
-        }
     }
 }

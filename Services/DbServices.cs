@@ -20,9 +20,9 @@ namespace WebApi.Services
     public interface IDbService
     {
         string Input(string input);
-        string Get(string input);
-        string Post(string input);
-        string Put(string input);
+        // string Get(string input);
+        // string Post(string input);
+        // string Put(string input);
     }
 
     public class DbService : IDbService
@@ -201,6 +201,50 @@ namespace WebApi.Services
                             JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
+                        if (jOp == "Procedure")
+                        {
+                            string jProcedureName = jOperacion["procedureName"].ToString();
+                            JArray jArgs = (JArray)jOperacion["args"];
+
+                            SqlCommand sqlCommand = new SqlCommand(jProcedureName, sqlConnection);
+                            sqlCommand.CommandType = CommandType.StoredProcedure;
+                             
+                            foreach (JObject jArg in jArgs)
+                            {
+                                string jType = "";
+                                JProperty propertyValue = jArg.Properties().ToList()[0];
+                                string jName = propertyValue.Name;
+                                string jValue = propertyValue.Value.ToString();
+
+                                JProperty propertyKeyDataType = jArg.Properties().ToList()[1];
+                                string jKeyData = propertyKeyDataType.Name;
+                                jType = propertyKeyDataType.Value.ToString();
+                                //jValue = FormatValue(jType, jValue);
+                                SqlDbType jSqlDbType = FormatSqlDbType(jType);
+                        
+                                sqlCommand.Parameters.Add("@"+jName, jSqlDbType).Value = jValue;
+                            }
+
+                            SqlDataAdapter da = new SqlDataAdapter();
+                            da.SelectCommand = sqlCommand;
+
+                            DataSet ds = new DataSet();
+                            da.Fill(ds);  
+                            Console.Write(ds.Tables.Count);
+
+                            int ii = 1;
+                            foreach(DataTable datatable in ds.Tables)
+                            {
+                                JsonResponse += (((i > 1) || (ii > 1)) ? "," : "")+"{\"" + i.ToString() + "." + ii.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                                ii++;
+                            }
+                            //SqlDataReader dr = sqlCommand.ExecuteReader();
+ 
+                            //var datatable = new DataTable();
+                            //datatable.Load(dr);
+                            //JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            i++;
+                        }
                     }
                     sqlConnection.Close();
                 }
@@ -216,177 +260,22 @@ namespace WebApi.Services
             return JsonResponse;
         }
 
-        public string Get(string input){
-            try{
-                string JsonResponse = "{'resultados': [";
-                JObject jInput = JObject.Parse(input);
-                string jBaseDatos = jInput["BaseDatos"].ToString();
-                
-                using (SqlConnection sqlConnection = new SqlConnection(_connectionString.AnimalsDB))
-                {
-                    sqlConnection.Open();
-                    JArray jOperaciones = (JArray)jInput["Operaciones"];
-                    int i = 1;
-                    foreach (JObject jSelect in jOperaciones)
-                    {
-                        string jOp = jSelect["Op"].ToString();
-                        if (jOp == "Seleccion")
-                        {
-                            string jTabla = jSelect["tabla"].ToString();
-                            string qrySelect = "SELECT * FROM " + jTabla;
-
-                            JArray jArgs = (JArray)jSelect["args"];
-                            qrySelect += (jArgs.Count > 0  ? " WHERE " : "");
-                            foreach (JObject jArg in jArgs)
-                            {
-                                JProperty property = jArg.Properties().ToList()[0];
-                                qrySelect += property.Name + " = " + property.Value;
-                            }
-                            SqlCommand sqlCommand = new SqlCommand(qrySelect, sqlConnection);
-                            SqlDataReader dr = sqlCommand.ExecuteReader();
-                            var datatable = new DataTable();
-                            datatable.Load(dr);
-                            JsonResponse += "{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
-                            i++;
-                        }
-                    }
-                    sqlConnection.Close();
-                }
-                JsonResponse += "]}";
-                return JsonResponse;
-            }
-            catch(Exception ex)
-            {
-                return ex.Message;
-            }
-        }
-        public string Post(string input){
-            try{
-                string JsonResponse = "{'resultados': [";
-                JObject jInput = JObject.Parse(input);
-                string jBaseDatos = jInput["BaseDatos"].ToString();
-                
-                using (SqlConnection sqlConnection = new SqlConnection(_connectionString.AnimalsDB))
-                {
-                    sqlConnection.Open();
-                    JArray jOperaciones = (JArray)jInput["Operaciones"];
-                    int i = 1;
-                    foreach (JObject jOperacion in jOperaciones)
-                    {
-                        string jOp = jOperacion["Op"].ToString();
-                        if (jOp == "Insert")
-                        {
-                            string jTabla = jOperacion["tabla"].ToString();
-                            string qryInsert = "INSERT INTO " + jTabla + " ";
-
-                            JArray jArgs = (JArray)jOperacion["args"];
-                            bool first = true;
-                            string qryInsertValues = ") values (";
-                            foreach (JObject jArg in jArgs)
-                            {
-                                JProperty property = jArg.Properties().ToList()[0];
-                                string jType = property.Name.Split(':')[1];
-                                string jName = property.Name.Split(':')[0];
-                                qryInsert += (first ? " (" : ", ") + jName;
-                                qryInsertValues += (first ? "" : ", ") + FormatValue(jType, property.Value.ToString());
-                                first = false;
-                            }
-                            qryInsert += qryInsertValues + ")";
-
-                            SqlCommand sqlCommand = new SqlCommand(qryInsert, sqlConnection);
-                            SqlDataReader dr = sqlCommand.ExecuteReader();
-                            var datatable = new DataTable();
-                            datatable.Load(dr);
-                            JsonResponse += "{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
-                            i++;
-                        }
-                    }
-                    sqlConnection.Close();
-                }
-                JsonResponse += "]}";
-                return JsonResponse;
-            }
-            catch(Exception ex)
-            {
-                return ex.Message;
-            }
-        }
-
         private string FormatValue(string jType, string jValue)
         {
             switch (jType)
             { 
-            case "string": return "'" + jValue + "'"; 
+            case "VARCHAR": return "'" + jValue + "'"; 
             default: return jValue;
             }
-        }
-        public string Put(string input){
-            try{
-                string JsonResponse = "{'resultados': [";
-                JObject jInput = JObject.Parse(input);
-                string jBaseDatos = jInput["BaseDatos"].ToString();
-                
-                using (SqlConnection sqlConnection = new SqlConnection(_connectionString.AnimalsDB))
-                {
-                    sqlConnection.Open();
-                    JArray jOperaciones = (JArray)jInput["Operaciones"];
-                    int i = 1;
-                    foreach (JObject jOperacion in jOperaciones)
-                    {
-                        string jOp = jOperacion["Op"].ToString();
-                        if (jOp == "Update")
-                        {
-                            string jTabla = jOperacion["tabla"].ToString();
-                            string qryUpdate = "UPDATE " + jTabla;
-
-                            JArray jArgs = (JArray)jOperacion["args"];
-                            bool firstWhere = true;
-                            bool firstSet = true;
-
-                            string qrySET = " SET ";
-
-                            string qryWHERE = " WHERE ";
-                            foreach (JObject jArg in jArgs)
-                            {
-                                JProperty property = jArg.Properties().ToList()[0];
-                                string jType = property.Name.Split(':')[1];
-                                string jName = property.Name.Split(':')[0];
-
-                                JProperty property1 = jArg.Properties().ToList()[1];
-                                string jData = property1.Value.ToString();
-                        
-                                if(jData == "key")
-                                {
-                                    qryWHERE += (firstWhere ? " " : " and ") + jName + " = " + FormatValue(jType, property.Value.ToString());                                    
-                                    firstWhere = false;
-                                }
-                                else
-                                {
-                                    qrySET += (firstSet ? " " : " and ") + jName + " = " + FormatValue(jType, property.Value.ToString());
-                                    firstSet = false;
-                                }
-                            }
-                            qryUpdate += qrySET + " " + qryWHERE;
-
-                            SqlCommand sqlCommand = new SqlCommand(qryUpdate, sqlConnection);
-                            SqlDataReader dr = sqlCommand.ExecuteReader();
-                            var datatable = new DataTable();
-                            datatable.Load(dr);
-                            JsonResponse += "{'" + i.ToString() + "': " + JsonConvert.SerializeObject(datatable) + "}";
-                            i++;
-                        }
-                    }
-                    sqlConnection.Close();
-                }
-                JsonResponse += "]}";
-                return JsonResponse;
-            }
-            catch(Exception ex)
-            {
-                return ex.Message;
+        }        
+        private SqlDbType FormatSqlDbType(string jType)
+        {
+            switch (jType)
+            { 
+            case "VARCHAR": return SqlDbType.VarChar; 
+            case "INT": return SqlDbType.Int; 
+            default: return SqlDbType.VarChar;
             }
         }
-
-
     }
 }
