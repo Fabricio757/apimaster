@@ -16,7 +16,7 @@ namespace WebApi.Controllers
             _dbService = dbService;
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpPost("Input")]
         public IActionResult Input(InputJsonRequest model)
         {

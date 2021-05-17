@@ -84,7 +84,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"R" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Seleccion")
@@ -120,7 +120,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"R" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Delete")
@@ -154,7 +154,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"R" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Update")
@@ -198,7 +198,7 @@ namespace WebApi.Services
                             SqlDataReader dr = sqlCommand.ExecuteReader();
                             var datatable = new DataTable();
                             datatable.Load(dr);
-                            JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                            JsonResponse += (i > 1 ? "," : "")+"{\"R" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                             i++;
                         }
                         if (jOp == "Procedure")
@@ -232,18 +232,16 @@ namespace WebApi.Services
                             da.Fill(ds);  
                             Console.Write(ds.Tables.Count);
 
-                            int ii = 1;
+                            //int ii = 1;
                             foreach(DataTable datatable in ds.Tables)
                             {
-                                JsonResponse += (((i > 1) || (ii > 1)) ? "," : "")+"{\"" + i.ToString() + "." + ii.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
-                                ii++;
+                                //JsonResponse += (((i > 1) || (ii > 1)) ? "," : "")+"{\"" + i.ToString() + "." + ii.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                                //ii++;
+                                JsonResponse += ((i > 1) ? "," : "")+"{\"R" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
+                                i++;
                             }
-                            //SqlDataReader dr = sqlCommand.ExecuteReader();
- 
-                            //var datatable = new DataTable();
-                            //datatable.Load(dr);
-                            //JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
-                            i++;
+
+                            //i++;
                         }
                     }
                     sqlConnection.Close();
