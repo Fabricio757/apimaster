@@ -235,8 +235,6 @@ namespace WebApi.Services
                             //int ii = 1;
                             foreach(DataTable datatable in ds.Tables)
                             {
-                                //JsonResponse += (((i > 1) || (ii > 1)) ? "," : "")+"{\"" + i.ToString() + "." + ii.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
-                                //ii++;
                                 JsonResponse += ((i > 1) ? "," : "")+"{\"R" + i.ToString() + "\": " + JsonConvert.SerializeObject(datatable) + "}";
                                 i++;
                             }
@@ -246,14 +244,11 @@ namespace WebApi.Services
                     }
                     sqlConnection.Close();
                 }
-                
-                //JsonResponse = "{'resultados': [{'1': [{'id':1,'nombre':'Perro     '},{'id':2,'nombre':'Gato      '},{'id':3,'nombre':'Leon      '},{'id':4,'nombre':'Tigre     '},{'id':5,'nombre':'Chita     '},{'id':7,'nombre':'Orca      '},{'id':8,'nombre':'Delfin    '}]}";
                 JsonResponse += "], \"error\": \"false\"}"; 
             }
             catch(Exception ex)
             {
-                JsonResponse += (i > 1 ? "," : "")+"{\"" + i.ToString() + "\": \"" + ex.Message + "\"}";
-                JsonResponse += "], \"error\": \"true\"}"; 
+                JsonResponse = "{\"message\": \"" + ex.Message + "\", \"error\": \"true\"}";
             }
             return JsonResponse;
         }
