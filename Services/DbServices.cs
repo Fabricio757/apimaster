@@ -188,7 +188,7 @@ namespace WebApi.Services
                                 }
                                 else
                                 {
-                                    qrySET += (firstSet ? " " : " and ") + jName + " = " + jValue;
+                                    qrySET += (firstSet ? " " : ", ") + jName + " = " + jValue;
                                     firstSet = false;
                                 }
                             }
@@ -258,6 +258,7 @@ namespace WebApi.Services
             switch (jType)
             { 
             case "VARCHAR": return "'" + jValue + "'"; 
+            case "BIT": return (jValue.ToUpper() == "TRUE" ? "1" : "0"); 
             default: return jValue;
             }
         }        
@@ -267,6 +268,7 @@ namespace WebApi.Services
             { 
             case "VARCHAR": return SqlDbType.VarChar; 
             case "INT": return SqlDbType.Int; 
+            case "BIT": return SqlDbType.Bit; 
             default: return SqlDbType.VarChar;
             }
         }
